@@ -1,0 +1,56 @@
+#:import sla kivy.adapters.listadapter
+#:import sdm kivy.adapters.models
+#:import label kivy.uix.label
+#:import button kivy.uix.button
+#:import lv kivy.uix.listview
+
+<EffectButton@BoxLayout>:
+    orientation: 'vertical'
+    Button:
+        size_hint_y:0.33
+        size_hint_x:1
+    Button:
+        size_hint_y:0.17
+        size_hint_x:1
+
+
+<MainForm@BoxLayout>:
+    orientation: 'horizontal'
+    list_view: list_view_id
+    BoxLayout:
+        orientation: 'vertical'
+        Button:
+            id: 'loader'
+            size_hint: 1, .1
+            text: root.pDir
+            id: 'load'
+            on_press: root.getdir()
+        ListView:
+            id: list_view_id
+            size_hint: 1,.8
+            adapter:
+                sla.ListAdapter(
+                #allow_empty_selection = False,
+                selection_mode='single',
+                selection_limit=1,
+                data=root.pList,
+                cls=root.LIButton,
+                )
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 1, .33
+            Button:
+                size_hint: 1, 0.66
+                text: 'Play'
+                on_press: root.playit()
+            Button:
+                size_hint: 1, 0.33
+                text: 'Next'
+                on_press: root.next()
+        GridLayout:
+            id: grid
+            size_hint: 1, 0.66
+            cols: 3
+            rows: 2

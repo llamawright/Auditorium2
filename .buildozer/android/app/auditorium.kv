@@ -1,0 +1,25 @@
+#:import sla kivy.adapters.simplelistadapter
+#:import label kivy.uix.label
+
+<MainForm>:
+    orientation: 'horizontal'
+    ListView:
+        size_hint: .8,.8
+        adapter:
+            sla.SimpleListAdapter(
+            data=["Item #{0}".format(i) for i in range(100)], cls=label.Label)
+    BoxLayout:
+        orientation: 'vertical'
+        Button:
+            text: 'load emma'
+            on_press: root.loadit()
+        Button:
+            text: 'load aladdin'
+            on_press: root.loadit2()
+        Button:
+            size_hint: .8, .8
+            text: 'play'
+            on_press: root.playit()
+        Button:
+            text: 'stop'
+            on_press: root.stopit()
