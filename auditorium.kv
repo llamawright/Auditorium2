@@ -4,19 +4,12 @@
 #:import button kivy.uix.button
 #:import lv kivy.uix.listview
 
-<EffectButton@BoxLayout>:
-    orientation: 'vertical'
-    Button:
-        size_hint_y:0.33
-        size_hint_x:1
-    Button:
-        size_hint_y:0.17
-        size_hint_x:1
-
 
 <MainForm@BoxLayout>:
     orientation: 'horizontal'
+    padding: [2,2,2,2]
     list_view: list_view_id
+            
     BoxLayout:
         orientation: 'vertical'
         Button:
@@ -39,18 +32,25 @@
     BoxLayout:
         orientation: 'vertical'
         BoxLayout:
+            id: tb
             orientation: 'vertical'
             size_hint: 1, .33
             Button:
-                size_hint: 1, 0.66
+                size_hint: 1, 0.67
                 text: 'Play'
                 on_press: root.playit()
             Button:
                 size_hint: 1, 0.33
                 text: 'Next'
                 on_press: root.next()
-        GridLayout:
-            id: grid
-            size_hint: 1, 0.66
-            cols: 3
-            rows: 2
+        Label:
+            size_hint: 1, 0.05
+            color: [0, .7, .7, 1]
+            text: '.  .  e  f  f  e  c  t  s  .  .'
+        BoxLayout:
+            size_hint: 1, .66
+            orientation: 'vertical'
+            GridLayout:
+                id: fxa
+                rows: 2
+                cols: 4

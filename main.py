@@ -6,6 +6,7 @@ from kivy.properties import NumericProperty
 from kivy.properties import BooleanProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.listview import ListView
+from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.core.audio import SoundLoader
 from kivy.core.audio import Sound
@@ -13,6 +14,7 @@ from kivy.uix.filechooser import FileChooserListView
 from kivy.uix.popup import Popup
 from kivy.adapters.models import SelectableDataItem
 from kivy.uix.listview import ListItemButton
+from kivy.graphics import Color, Line
 import os
 
 
@@ -60,9 +62,24 @@ class Player():
                 self.paused = True
 
 
+class EffectButton(BoxLayout):
+
+    def __init__(self, **kwargs):
+        BoxLayout.__init__(self, **kwargs)
+        self.filename = ''
+        self.orientation = 'vertical'
+        self.tb = Button()
+        self.tb.size_hint_y = 0.66
+        self.tb.size_hint_x = 1
+        self.lb = Button()
+        self.lb.size_hint_y = 0.33
+        self.lb.size_hint_x = 1
+        self.add_widget(self.tb)
+        self.add_widget(self.lb)
+        self.bar = []
 
 class MainForm(BoxLayout):
-    pList = ListProperty(['one', 'two', 'three'])
+    pList = ListProperty([])
     pDir = StringProperty('')
     pPath = StringProperty('/')
     music = Player()
@@ -71,6 +88,23 @@ class MainForm(BoxLayout):
     def __init__(self, **kwargs):
         super(MainForm, self).__init__(**kwargs)
         self.list_view.adapter.bind(on_selection_change=self.selection_changed)
+        fxa = self.ids.fxa
+        self.butbar = []
+        for i in range(8):
+            nb = EffectButton()
+            bar = []
+            nb.tb.color = [ 0, .7, .7, 1]
+            nb.lb.color = [ 0, .7, .7, 1]
+            nb.tb.text = ''
+            nb.tb.seqnum = i
+            nb.tb.seqact = True
+            nb.lb.text = ''
+            nb.lb.seqnum = i
+            nb.lb.seqact = False
+            nb.tb.bind(on_press=self.action)
+            nb.lb.bind(on_press=self.action)
+            fxa.add_widget(nb)
+            self.butbar.append(nb)
         pass
 
     class LIButton(ListItemButton):
@@ -104,27 +138,90 @@ class MainForm(BoxLayout):
         self.pNumb = -1
 
     def selection_changed(self, *args):
-        for i in range(len(self.list_view.adapter.data)):
-            if self.list_view.adapter.get_view(i).text==self.list_view.adapter.selection[0].text:
-                self.pNumb= i
-                break
-        self.music.loadit(self.pPath, self.list_view.adapter.get_view(self.pNumb).text)
+        lva = self.list_view.adapter
+        if lva.selection:
+            for i in range(len(lva.data)):
+                if lva.get_view(i).text == lva.selection[0].text:
+                    self.pNumb= i
+                    break
+            self.music.loadit(self.pPath, lva.get_view(self.pNumb).text)
+
 
     def next(self):
-        if self.pNumb >= -1 and self.pNumb < len(self.list_view.adapter.data):
-            self.pNumb += 1
-            #load up the play button
-            #self.music.loadit(self.pPath, self.list_view.adapter.get_view(self.pNumb).text)
-        if self.pNumb < len(self.list_view.adapter.data):
-            self.list_view.adapter.get_view(self.pNumb).trigger_action(duration=0)
-        else:
-            self.music.stopit()
+        # conveniences for list_view.adapter and total number in adapter
+        lva = self.list_view.adapter
+        many = len(lva.data)
+        # stop any music and any effects
+        self.music.stopit()
+        self.stop_effects()
+        # if no more entries that are not effects then exit
+        t = self.pNumb + 1
+        while t < many and self.is_effect(lva.get_view(t).text):
+            t += 1
+        if t >= many:
+            return
+        self.pNumb = t
+        lva.get_view(self.pNumb).trigger_action(duration=0)
+        t = self.pNumb + 1
+        slot = 0
+        while t < many and self.is_effect(lva.get_view(t).text):
+            self.load_effect(lva.get_view(t).text, slot)
+            t += 1
+            slot += 1
+
 
     def playit(self):
         self.music.playit()
 
     def scroll(self):
         self.list_view.adapter.scroll_to(47)
+
+    def is_effect(self, filename):
+        for c in filename:
+            if c == '-':
+                return False
+            if 'a' <= c <=  'z':
+                return True
+        return False
+
+    def load_effect(self, filename, slot):
+        if slot < 8:
+            fullpath = os.path.join( self.pPath, filename)
+            self.butbar[slot].filename = fullpath
+            t, ext = os.path.splitext(filename)
+            n, t = t.split('-', 1)
+            n = n.strip()
+            t = t.split()
+            t = n +'\n' + '\n'.join(t)
+            self.butbar[slot].tb.text = t
+            self.butbar[slot].lb.text = 'Stop'
+
+
+
+    def action(self, obj):
+
+        if obj.seqact:
+            if obj.parent.filename == '':
+                return
+            effect = SoundLoader.load(obj.parent.filename)
+            obj.parent.bar.append(effect)
+            effect.play()
+        else:
+            for effect in obj.parent.bar:
+                effect.stop()
+            obj.parent.bar = []
+
+    def stop_effects(self):
+        for obj in self.butbar:
+            for effect in obj.bar:
+                effect.stop()
+            obj.parent.bar = []
+            for k in self.butbar:
+                k.filename = ''
+                k.tb.text = ''
+                k.lb.text = ''
+
+
 
 class AuditoriumApp(App):
     def build(self):
