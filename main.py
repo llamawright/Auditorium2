@@ -15,37 +15,59 @@ from kivy.uix.popup import Popup
 from kivy.adapters.models import SelectableDataItem
 from kivy.uix.listview import ListItemButton
 from kivy.graphics import Color, Line
+from kivy.clock import Clock
 import os
 
 
+
 class Player():
-    pPath = StringProperty();
-    pFile = StringProperty();
-    sound = ObjectProperty();
+    pPath = StringProperty()
+    pFile = StringProperty()
+    sound = ObjectProperty()
+    pb = ObjectProperty()
 
     def __init__(self):
-        self.loadd = False;
+        self.loadd = False
+        self.playing = False
 
     def loadit(self, pPath, filename):
         if self.loadd == True:
             self.sound.stop()
             self.sound.unload()
             self.loadd = False
+            self.playing = False
         self.paused = False
         self.pPath = pPath
         self.filename = filename
         self.sound = SoundLoader.load(os.path.join(self.pPath, self.filename))
         self.loadd = True
+        self.playing = True
 
     def playit(self):
         if self.loadd == True:
             self.paused = False
+            self.playing = True
             self.sound.play()
+            Clock.schedule_interval(self.play_pos, 0.5)
+
+    def play_pos(self, dt):
+        if not self.playing:
+            return 0
+        pos = self.sound.get_pos()
+        len = self.sound.length
+        far = pos*100/len
+        root.ids.pb.value = far
+        return far
+
+    def play_not(self, dt):
+        return 0
 
     def stopit(self):
         if self.loadd == True:
             self.paused = False
+            self.playing = False
             self.sound.stop()
+            Clock.schedule_once(self.play_not)
 
     def pause(self):
         if self.loadd == True:
@@ -126,6 +148,7 @@ class MainForm(BoxLayout):
         string = os.path.normpath(string)
         l = sorted([x for x in os.listdir(string)
                 if x[0] != '.'
+                and '-' in x
                 and (
                 x[-4:] == '.wav'
                 or
@@ -146,14 +169,17 @@ class MainForm(BoxLayout):
                     break
             self.music.loadit(self.pPath, lva.get_view(self.pNumb).text)
 
+    def stop(self):
+        # stop any music and any effects
+        self.music.stopit()
+        self.stop_effects()
 
     def next(self):
         # conveniences for list_view.adapter and total number in adapter
         lva = self.list_view.adapter
         many = len(lva.data)
         # stop any music and any effects
-        self.music.stopit()
-        self.stop_effects()
+        self.stop()
         # if no more entries that are not effects then exit
         t = self.pNumb + 1
         while t < many and self.is_effect(lva.get_view(t).text):
@@ -161,6 +187,9 @@ class MainForm(BoxLayout):
         if t >= many:
             return
         self.pNumb = t
+        n, t = lva.get_view(self.pNumb).text.split('-',1)
+        n = n.strip()
+        self.ids.play.text = n + '\n' + t 
         lva.get_view(self.pNumb).trigger_action(duration=0)
         t = self.pNumb + 1
         slot = 0
@@ -180,7 +209,7 @@ class MainForm(BoxLayout):
         for c in filename:
             if c == '-':
                 return False
-            if 'a' <= c <=  'z':
+            if 'A' <= c <=  'Z':
                 return True
         return False
 
@@ -225,7 +254,9 @@ class MainForm(BoxLayout):
 
 class AuditoriumApp(App):
     def build(self):
-        return MainForm()
+        global root
+        root = MainForm()
+        return root
 
 if __name__ == '__main__':
     AuditoriumApp().run()

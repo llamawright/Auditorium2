@@ -5,7 +5,7 @@
 #:import lv kivy.uix.listview
 
 
-<MainForm@BoxLayout>:
+<MainForm>:
     orientation: 'horizontal'
     padding: [2,2,2,2]
     list_view: list_view_id
@@ -36,10 +36,16 @@
             orientation: 'vertical'
             size_hint: 1, .33
             Button:
+                id: play
                 size_hint: 1, 0.67
                 text: 'Play'
                 on_press: root.playit()
+            ProgressBar:
+                id: pb
+                size_hint: 1, 0.1
+                value: 0
             Button:
+                id: stop
                 size_hint: 1, 0.33
                 text: 'Next'
                 on_press: root.next()
