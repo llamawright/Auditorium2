@@ -44,11 +44,19 @@
                 id: pb
                 size_hint: 1, 0.1
                 value: 0
-            Button:
-                id: stop
+            BoxLayout:
                 size_hint: 1, 0.33
-                text: 'Next'
-                on_press: root.next()
+                orientation: 'horizontal'
+                Button:
+                    id: prev
+                    size_hint: 0.2, 1
+                    text: 'Prev'
+                    on_press: root.prev()
+                Button:
+                    id: stop
+                    size_hint: 0.8, 1
+                    text: 'Next'
+                    on_press: root.next()
         Label:
             size_hint: 1, 0.05
             color: [0, .7, .7, 1]

@@ -161,13 +161,15 @@ class MainForm(BoxLayout):
         self.pNumb = -1
 
     def selection_changed(self, *args):
+        t = self.pNumb
         lva = self.list_view.adapter
         if lva.selection:
             for i in range(len(lva.data)):
                 if lva.get_view(i).text == lva.selection[0].text:
-                    self.pNumb= i
+                    t = i
                     break
-            self.music.loadit(self.pPath, lva.get_view(self.pNumb).text)
+            self.load(t)
+            # self.music.loadit(self.pPath, lva.get_view(self.pNumb).text)
 
     def stop(self):
         # stop any music and any effects
@@ -186,7 +188,30 @@ class MainForm(BoxLayout):
             t += 1
         if t >= many:
             return
-        self.pNumb = t
+        self.load(t)
+
+    def prev(self):
+        lva = self.list_view.adapter
+        many = len(lva.data)
+        # stop any music and any effects
+        self.stop()
+        # if no more entries that are not effects then exit
+        t = self.pNumb - 1
+        while t > 0 and self.is_effect(lva.get_view(t).text):
+            t -= 1
+        if t < 0:
+            return
+        self.load(t)
+
+
+    def load(self, pNumb):
+        lva = self.list_view.adapter
+        many = len(lva.data)
+        if self.pNumb == pNumb:
+            return
+        self.pNumb = pNumb
+        if self.is_effect(lva.get_view(self.pNumb).text):
+            self.prev()
         n, t = lva.get_view(self.pNumb).text.split('-',1)
         n = n.strip()
         self.ids.play.text = n + '\n' + t 
@@ -197,6 +222,9 @@ class MainForm(BoxLayout):
             self.load_effect(lva.get_view(t).text, slot)
             t += 1
             slot += 1
+        self.music.loadit(self.pPath, lva.get_view(self.pNumb).text)
+        if not lva.get_view(self.pNumb).is_selected:
+            lva.get_view(self.pNumb).trigger_action(duration=0)
 
 
     def playit(self):
